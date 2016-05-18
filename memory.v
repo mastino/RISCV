@@ -3,99 +3,116 @@
 // Lab1 April 13 2016
 // Memory
 
-module Memory #(parameter ADDR_WIDTH  = 32, DATA_WIDTH  = 32, MEM_DEPTH = 5) 
-                    (clk, rst, we, re, ra, wa, wd, rd);
-   
-   output [DATA_WIDTH-1:0] rd;
-   input [REG_WIDTH-1:0] wd;
-   input [ADDR_WIDTH-1:0] rs1, rs2, ws;
-   input rst, write, read;
+module Memory #(parameter ADDR_WIDTH  = 32, DATA_WIDTH  = 32) 
+                    (clk, rst, we, ra, wa, wd, rd);
 
-   reg [REG_WIDTH-1:0] rd1, rd2;
-   reg [REG_WIDTH-1:0] mem [MEM_DEPTH-1:0];
+    output reg [DATA_WIDTH-1:0] rd;
+    input [DATA_WIDTH-1:0] wd;
+    input [ADDR_WIDTH-1:0] ra, wa;
+    input clk, rst, we;
 
-   always @ (posedge clk)
-   begin
-      if(rst)
-      begin
-         regs[0] <= 0;
-      end else
-      begin
-        if(ws == 0)
-        begin
-          regs[ws] <= 0;
-        end else
-        begin
-          regs[ws] <= wd;
+    reg [DATA_WIDTH-1:0] mem [(1<<ADDR_WIDTH)-1:0];
+
+    always @ (posedge clk)
+    begin
+      if(rst) begin
+        rd <= 0;  
+      end else begin
+        rd <= ( (ra == wa) & we) ? wd : mem[ra];
+        if(we) begin
+           mem[wa] <= wd;
         end
       end
-   end
+    end
    
 endmodule
 
 module tb_Memory; 
-   parameter reg_len  = 32;
-   parameter name_bit = 5;
-   parameter num_regs = 32;
+   parameter data_width  = 32;
+   parameter addr_bits = 32;
 
-   reg rst, write, read; 
-   wire [reg_len-1:0] rd1, rd2;
-   reg [reg_len-1:0] wd;
-   reg [name_bit-1:0] rs1, rs2, ws;
+   wire [data_width-1:0] rd;
+   reg  [data_width-1:0] wd;
+   reg  [addr_bits-1:0]  ra, wa;
+   reg  clk, rst, we;
 
-   registerFile regFile ( 
-   .rst (rst), 
-   .write (write), 
-   .read (read), 
-   .rs1 (rs1), 
-   .rs2 (rs2), 
-   .ws  (ws),  
-   .wd  (wd), 
-   .rd1 (rd1), 
-   .rd2 (rd2) 
+   Memory foam #(.ADDR_WIDTH(addr_bits), .DATA_WIDTH(data_width)) ( 
+     .clk (clk), 
+     .rst (rst), 
+     .we (we),
+     .ra (ra), 
+     .wa (wa), 
+     .wd  (wd),  
+     .rd  (rd)
    ); 
     
    initial 
    begin 
-       rst   = 0; 
-       write = 0;
-       read  = 0;
-   #5  rst   = 1; // reset
-       write = 0;
-       read  = 0;
-   #5  rst   = 0; // wait
-       write = 0;
-       read  = 0;
-   #5  ws    = 1; // r1 = 1
-       wd    = 1;
-       write = 1;
-   #5  read  = 1; // read r1 and r0
-       rs1   = 1;
-       rs2   = 0;
-       write = 0;
-   #5  read  = 0; // r31 = 3
-       ws    = 31;
-       wd    = 3;
-       write = 1;
-   #5  read  = 1; // read r0 and r31
-       rs1   = 0;
-       rs2   = 31;
-       write = 0;
-   #5  read  = 0; // r1 = 5
-       ws    = 1;
-       wd    = 5;
-       write = 1;
-   #5  read  = 1; //read r1 and r31
-       rs1   = 1;
-       rs2   = 31;
-       write = 0;
-   #5  rst   = 0; // wait
-       write = 0;
-       read  = 0;
+       rst = 0; 
+       we  = 0;
+       ra  = 0;
+       wa  = 0;
+       wd  = 1;
+   #5  rst = 1; // reset
+       we  = 0;
+       ra  = 0;
+       wa  = 0;
+       wd  = 1;
+       $display("Expect rd=%h", 0);
+       $display("Actual rd=%h", rd);
+   #5  rst = 0;
+       we  = 1;
+       ra  = 1;
+       wa  = 0;
+       wd  = 5;
+       $display("Expect rd=????");
+       $display("Actual rd=%h", rd);
+   #5  we  = 0;
+       ra  = 0;
+       wa  = 1;
+       wd  = 8;
+       $display("Expect rd=%h", 5);
+       $display("Actual rd=%h", rd);
+   #5  we  = 0;
+       ra  = 0;
+       wa  = 0;
+       wd  = 8;
+       $display("Expect rd=%h", 5);
+       $display("Actual rd=%h", rd);
+   #5  we  = 0;
+       ra  = 0;
+       wa  = 0;
+       wd  = 8;
+       $display("Expect rd=%h", 5);
+       $display("Actual rd=%h", rd);
+   #5  we  = 1;
+       ra  = 1;
+       wa  = 1;
+       wd  = 1;
+       $display("Expect rd=%h", 1);
+       $display("Actual rd=%h", rd);
+   #5  we  = 1;
+       ra  = 1;
+       wa  = 32'hACDC1234;
+       wd  = 2;
+       $display("Expect rd=%h", 1);
+       $display("Actual rd=%h", rd);
+   #5  we  = 1;
+       ra  = 32'hACDC1234;
+       wa  = 2;
+       wd  = 3;
+       $display("Expect rd=%h", 2);
+       $display("Actual rd=%h", rd);
+   #5  we  = 0;
+       ra  = 2;
+       wa  = 2;
+       wd  = 6;
+       $display("Expect rd=%h", 3);
+       $display("Actual rd=%h", rd);
 
    end 
     
-   // always 
-   //   #5  clk =  ! clk; 
+   always 
+     #5  clk =  ! clk; 
     
 endmodule 
