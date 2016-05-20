@@ -5,6 +5,8 @@
 
 module alu #(parameter DATA_WIDTH  = 32, parameter CTRL_BITS = 4) (ctrl, a, b, c, zero, over, c_out);
    
+  localparam AND = 4'b0000, OR = 4'b0001, ADD = 4'b0010, SUB = 4'b0110, SLT = 4'b0111, SGE = 4'b0101, NOR = 4'b1100;
+
    output reg [DATA_WIDTH-1:0] c;
    output reg zero, over, c_out;
    input [DATA_WIDTH-1:0] a, b;
@@ -17,24 +19,24 @@ module alu #(parameter DATA_WIDTH  = 32, parameter CTRL_BITS = 4) (ctrl, a, b, c
    always @ (*)
    begin
       case ( ctrl )
-        4'b0000 : begin
+        AND : begin
           c <= a & b; // and
           over <= 0;
           c_out <= 0;
           end
-        4'b0001 : begin 
+        OR  : begin 
           c <= a | b; // or
           over <= 0;
           c_out <= 0;
           end
-        4'b0010 : begin 
+        ADD : begin 
           {cn, c_temp} <= a[DATA_WIDTH-2:0] + b[DATA_WIDTH-2:0]; // add
           c <= {(cn ^ a[DATA_WIDTH-1] ^ b[DATA_WIDTH-1]), c_temp};
           co <= (cn & a[DATA_WIDTH-1]) | (cn & b[DATA_WIDTH-1]) | (b[DATA_WIDTH-1] & a[DATA_WIDTH-1]);
           over <= (cn != co ? 1 : 0);
           c_out <= co;
           end
-        4'b0110 : begin 
+        SUB : begin 
           neg_b <= (~b) + 1;
           {cn, c_temp} = a[DATA_WIDTH-2:0] + neg_b[DATA_WIDTH-2:0]; // add
           c <= {(cn ^ a[DATA_WIDTH-1] ^ neg_b[DATA_WIDTH-1]), c_temp};
@@ -42,17 +44,17 @@ module alu #(parameter DATA_WIDTH  = 32, parameter CTRL_BITS = 4) (ctrl, a, b, c
           over <= (cn != co ? 1 : 0);
           c_out <= co;
           end
-        4'b0111 : begin 
+        SLT : begin 
           c <= a < b ? 1 : 0; // slt
           over <= 0;
           c_out <= 0;
           end
-        4'b0101 : begin
+        SGE : begin
           c <= a >= b ? 1 : 0; // sge for BGRE in RISCV
           over <= 0;
           c_out <= 0;
           end
-        4'b1100 : begin 
+        NOR : begin 
           c <= ~(a | b); // nor
           over <= 0;
           c_out <= 0;

@@ -53,25 +53,25 @@ module RegFileALUMemory #(parameter DATA_WIDTH  = 32, NAME_BITS = 5, CTRL_BITS =
    ); 
     
    registerFile regFile ( 
-   .rst (rst), 
-   .write (write), 
-   .read (read), 
-   .rs1 (rs1), 
-   .rs2 (rs2), 
-   .ws  (ws),  
-   .wd  (wd), 
-   .rd1 (rd1), 
-   .rd2 (rd2) 
+     .rst (rst), 
+     .write (write), 
+     .read (read), 
+     .rs1 (rs1), 
+     .rs2 (rs2), 
+     .ws  (ws),  
+     .wd  (wd), 
+     .rd1 (rd1), 
+     .rd2 (rd2) 
    ); 
 
    alu my_alu ( 
-   .ctrl (op_in), 
-   .a (a), 
-   .b (b), 
-   .c (c), 
-   .zero (zero), 
-   .over (over), 
-   .c_out (c_out) 
+     .ctrl (op_in), 
+     .a (a), 
+     .b (b), 
+     .c (c), 
+     .zero (zero), 
+     .over (over), 
+     .c_out (c_out) 
    ); 
 
    always @(posedge clk) begin
@@ -98,31 +98,40 @@ module tb_RegFileALU;
    parameter num_regs = 32;
    parameter ctrl_bits = 4;
 
-   reg clk, rst, imm_e; 
+   reg clk, rst, imm_e, mem_rst, mem_we, mem_re, mem_rs, mem_ws; 
    reg [ctrl_bits-1:0] op_in;
    reg [reg_len-1:0] imm_d;
    reg [name_bit-1:0] rs1, rs2, ws;
 
    RegFileALU my_very_small_processor_thingy ( 
-   .clk   (clk), 
-   .rst  (rst),
-   .rs1   (rs1), 
-   .rs2   (rs2), 
-   .ws_in (ws), 
-   .op_in (op_in),
-   .imm_e (imm_e),
-   .imm_d (imm_d)
+     .clk     (clk), 
+     .rst     (rst),
+     .rs1     (rs1), 
+     .rs2     (rs2), 
+     .ws_in   (ws), 
+     .op_in   (op_in),
+     .imm_e   (imm_e),
+     .imm_d   (imm_d),
+     .mem_rst (mem_rst),
+     .mem_we  (mem_we),
+     .mem_re  (mem_re),
+     .mem_rs  (mem_rs),
+     .mem_ws  (mem_ws)
    ); 
     
    initial 
    begin 
-   clk = 0; 
-   ws  = 0;
-   imm_e = 0;
-   rs1 = 0;
-   rs2 = 0;
-   op_in = 0;
-   rst = 1;
+   clk     = 0; 
+   ws      = 0;
+   imm_e   = 0;
+   rs1     = 0;
+   rs2     = 0;
+   op_in   = 0;
+   rst     = 1;
+   mem_rst = 0;
+   mem_re  = 0;
+   mem_we  = 0;
+
    #20 rst = 0;
    #15 ws  = 1;
        rs1 = 0;
