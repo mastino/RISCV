@@ -13,6 +13,7 @@ module alu #(parameter DATA_WIDTH  = 32, parameter CTRL_BITS = 4) (ctrl, a, b, c
              SLT  = 4'b0111, 
              SLTU = 4'b1111, 
              SGE  = 4'b0101, 
+             SGEU = 4'b1101, 
              NOR  = 4'b1100;
 
    output reg [DATA_WIDTH-1:0] c;
@@ -57,8 +58,18 @@ module alu #(parameter DATA_WIDTH  = 32, parameter CTRL_BITS = 4) (ctrl, a, b, c
           over <= 0;
           c_out <= 0;
           end
+        SLTU : begin 
+          c <= {1'b0, a} < {1'b0, b} ? 1 : 0; // slt
+          over <= 0;
+          c_out <= 0;
+          end
         SGE : begin
           c <= a >= b ? 1 : 0; // sge for BGRE in RISCV
+          over <= 0;
+          c_out <= 0;
+          end
+        SLTU : begin 
+          c <= {1'b0, a} >= {1'b0, b} ? 1 : 0; // slt
           over <= 0;
           c_out <= 0;
           end
@@ -81,6 +92,17 @@ endmodule
 module tb_alu; 
    parameter data_width  = 32;
    parameter ctrl_bit = 4;
+
+  localparam AND  = 4'b0000, 
+             OR   = 4'b0011, 
+             XOR  = 4'b0001, 
+             ADD  = 4'b0010, 
+             SUB  = 4'b0110, 
+             SLT  = 4'b0111, 
+             SLTU = 4'b1111, 
+             SGE  = 4'b0101, 
+             SGEU = 4'b1101, 
+             NOR  = 4'b1100;
 
    wire [data_width-1:0] c;
    wire over, c_out, zero;
@@ -176,6 +198,11 @@ module tb_alu;
        b    = 32'd3;
        ctrl = 4'b0111;
        $display("Expect a=%h b=%h op=%h c=%h over=%b c_out=%b zero=%b", a, b, ctrl, a < b, 1'b0, 1'b0, 1'b0);
+   #10 $display("Actual a=%h b=%h op=%h c=%h over=%b c_out=%b zero=%b", a, b, ctrl, c, over, c_out, zero);
+       a    = 32'h0FFFBEEF;
+       b    = 32'hFFFFFFF3;
+       ctrl = SLTU;
+       $display("Expect a=%h b=%h op=%h c=%h over=%b c_out=%b zero=%b", a, b, ctrl, 1, 1'b0, 1'b0, 1'b0);
    #10 $display("Actual a=%h b=%h op=%h c=%h over=%b c_out=%b zero=%b", a, b, ctrl, c, over, c_out, zero);
        a    = 32'h00FF00FF;
        b    = 32'h00FFFF00;
