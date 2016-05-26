@@ -5,7 +5,8 @@
 // separates instruction into relevant chunks
 
 module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS = 3, OP_BITS = 7) 
-                    (instr, rs1, rs2, rd, funct3, imm, op, reg1_en, reg2_en, imm_en, regw_en, memr_en, memw_en, alt_op);
+                    (instr, rs1, rs2, rd, funct3, imm, op, 
+                    reg1_en, reg2_en, imm_en, regw_en, memr_en, memw_en, alt_op, br_en, j_en);
    
    //opcodes
    localparam OP_IMM   = 7'b0010011, 
@@ -24,7 +25,7 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
    output reg [FUNC_BITS-1:0] funct3;
    output reg [INSTR_WIDTH-1:0] imm;
    output reg [OP_BITS-1:0] op;
-   output reg reg1_en, reg2_en, imm_en, regw_en, memr_en, memw_en, alt_op;
+   output reg reg1_en, reg2_en, imm_en, regw_en, memr_en, memw_en, alt_op, br_en, j_en;
 
    input [INSTR_WIDTH-1:0] instr;
 
@@ -46,6 +47,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           regw_en <= 1;
           memr_en <= 0;
           memw_en <= 0;
+          br_en   <= 0;
+          j_en    <= 0;
           if(instr[14:12] == 3'b101) begin /* shift r */
             imm <= { {27{1'b0}}, instr[24:20] };
             alt_op <= instr[30];
@@ -66,6 +69,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           memr_en <= 0;
           memw_en <= 0;
           alt_op  <= 1'b0;
+          br_en   <= 0;
+          j_en    <= 0;
           end
         AUIPC : begin 
           imm <= { instr[31], instr[30:12], {12{1'b0}} };
@@ -75,6 +80,9 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           regw_en <= 1;
           memr_en <= 0;
           memw_en <= 0;
+          alt_op  <= 1'b0;
+          br_en   <= 0;
+          j_en    <= 0;
           end
         OP : begin 
           imm <= 32'b0;
@@ -84,6 +92,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           regw_en <= 1;
           memr_en <= 0;
           memw_en <= 0;
+          br_en   <= 0;
+          j_en    <= 0;
           if( (instr[14:12] == 3'b000) | (instr[14:12] == 3'b101) ) begin
             alt_op = instr[30];
           end else begin
@@ -99,6 +109,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           memr_en <= 0;
           memw_en <= 0;
           alt_op  <= 1'b0;
+          br_en   <= 0;
+          j_en    <= 1;
           end
         JALR : begin
           imm <= { {21{instr[31]}}, instr[30:20] };
@@ -109,6 +121,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           memr_en <= 0;
           memw_en <= 0;
           alt_op  <= 1'b0;
+          br_en   <= 0;
+          j_en    <= 1;
           end
         BRANCH : begin 
           imm <= { {21{instr[31]}}, instr[30:20] };
@@ -119,6 +133,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           memr_en <= 0;
           memw_en <= 0;
           alt_op  <= 1'b0;
+          br_en   <= 1;
+          j_en    <= 0;
           end
         LOAD : begin 
           imm <= { {21{instr[31]}}, instr[30:20] };
@@ -129,6 +145,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           memr_en <= 1;
           memw_en <= 0;
           alt_op  <= 1'b0;
+          br_en   <= 0;
+          j_en    <= 0;
           end
         STORE : begin 
           imm <= { {21{instr[31]}}, instr[30:25], instr[11:8], instr[7] };
@@ -139,6 +157,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           memr_en <= 0;
           memw_en <= 1;
           alt_op  <= 1'b0;
+          br_en   <= 0;
+          j_en    <= 0;
           end
         default : begin //MISC_MEM, SYSTEM
           imm <= 32'b0;
@@ -149,6 +169,8 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
           memr_en <= 0;
           memw_en <= 0;
           alt_op  <= 1'b0;
+          br_en   <= 0;
+          j_en    <= 0;
           end
       endcase
    end
