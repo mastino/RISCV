@@ -5,7 +5,7 @@
 // separates instruction into relevant chunks
 
 module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS = 3, OP_BITS = 7) 
-                    (instr, rs1, rs2, rd, funct3, imm, op);
+                    (instr, rs1, rs2, rd, funct3, imm, op, reg1_en, reg2_en, imm_en, regw_en, memr_en, memw_en, alt_op);
    
    //opcodes
    localparam OP_IMM   = 7'b0010011, 
@@ -24,6 +24,7 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
    output reg [FUNC_BITS-1:0] funct3;
    output reg [INSTR_WIDTH-1:0] imm;
    output reg [OP_BITS-1:0] op;
+   output reg reg1_en, reg2_en, imm_en, regw_en, memr_en, memw_en, alt_op;
 
    input [INSTR_WIDTH-1:0] instr;
 
@@ -31,57 +32,130 @@ module instr_parser #(parameter INSTR_WIDTH  = 32, REG_NAME_BITS = 5, FUNC_BITS 
    begin
       case ( instr[OP_BITS-1:0] )
 
-        op <= instr[OP_BITS-1:0];
+        op     <= instr[OP_BITS-1:0];
+        rs1    <= instr[19:15];
+        rs2    <= instr[24:20];
+        rd     <= instr[11:7];
+        funct3 <= instr[14:12];
 
         OP_IMM : begin
-          rs1    <= instr[19:15];
-          rs2    <= instr[24:20];
-          rd     <= instr[11:7];
-          funct3 <= instr[14:12];
-          imm    <= { {30{instr[31]}}, instr[30:20]};
+          imm <= { {21{instr[31]}}, instr[30:20] };
+          reg1_en <= 1;
+          reg2_en <= 0;
+          imm_en  <= 1;
+          regw_en <= 1;
+          memr_en <= 0;
+          memw_en <= 0;
+          if(instr[14:12] == 3'b101) begin /* shift r */
+            imm <= { {27{1'b0}}, instr[24:20] };
+            alt_op <= instr[30];
+          end else if(instr[14:12] == 3'b001) begin /* shift l */
+            imm <= { {27{1'b0}}, instr[24:20] };
+            alt_op <= 1'b0;
+          end else begin
+            imm    <= { {21{instr[31]}}, instr[30:20] };
+            alt_op <= 1'b0;
+          end
           end
         LUI : begin 
-
+          imm <= { instr[31], instr[30:12], {12{1'b0}} };
+          reg1_en <= 0;
+          reg2_en <= 0;
+          imm_en  <= 1;
+          regw_en <= 1;
+          memr_en <= 0;
+          memw_en <= 0;
+          alt_op  <= 1'b0;
           end
         AUIPC : begin 
-          
+          imm <= { instr[31], instr[30:12], {12{1'b0}} };
+          reg1_en <= 0;
+          reg2_en <= 0;
+          imm_en  <= 1;
+          regw_en <= 1;
+          memr_en <= 0;
+          memw_en <= 0;
           end
         OP : begin 
-          
+          imm <= 32'b0;
+          reg1_en <= 1;
+          reg2_en <= 1;
+          imm_en  <= 0;
+          regw_en <= 1;
+          memr_en <= 0;
+          memw_en <= 0;
+          if( (instr[14:12] == 3'b000) | (instr[14:12] == 3'b101) ) begin
+            alt_op = instr[30];
+          end else begin
+            alt_op  <= 1'b0;
+          end
           end
         JAL : begin 
-          
+          imm <= { {12{instr[31]}}, instr[19:12],  instr[20],  instr[30:21], 1'b0 };
+          reg1_en <= 1;
+          reg2_en <= 0;
+          imm_en  <= 1;
+          regw_en <= 1;
+          memr_en <= 0;
+          memw_en <= 0;
+          alt_op  <= 1'b0;
           end
         JALR : begin
-          
+          imm <= { {21{instr[31]}}, instr[30:20] };
+          reg1_en <= 0;
+          reg2_en <= 0;
+          imm_en  <= 1;
+          regw_en <= 1;
+          memr_en <= 0;
+          memw_en <= 0;
+          alt_op  <= 1'b0;
           end
         BRANCH : begin 
-          
+          imm <= { {21{instr[31]}}, instr[30:20] };
+          reg1_en <= 1;
+          reg2_en <= 1;
+          imm_en  <= 1;
+          regw_en <= 0;
+          memr_en <= 0;
+          memw_en <= 0;
+          alt_op  <= 1'b0;
           end
         LOAD : begin 
-          
+          imm <= { {21{instr[31]}}, instr[30:20] };
+          reg1_en <= 1;
+          reg2_en <= 0;
+          imm_en  <= 1;
+          regw_en <= 1;
+          memr_en <= 1;
+          memw_en <= 0;
+          alt_op  <= 1'b0;
           end
         STORE : begin 
-          
+          imm <= { {21{instr[31]}}, instr[30:25], instr[11:8], instr[7] };
+          reg1_en <= 1;
+          reg2_en <= 1;
+          imm_en  <= 1;
+          regw_en <= 0;
+          memr_en <= 0;
+          memw_en <= 1;
+          alt_op  <= 1'b0;
           end
-        MISC_MEM : begin 
-          
-          end
-        SYSTEM : begin 
-          
-          end
-        default : begin
-          
+        default : begin //MISC_MEM, SYSTEM
+          imm <= 32'b0;
+          reg1_en <= 0;
+          reg2_en <= 0;
+          imm_en  <= 0;
+          regw_en <= 0;
+          memr_en <= 0;
+          memw_en <= 0;
+          alt_op  <= 1'b0;
           end
       endcase
-
-      zero = c == 0 ? 1 : 0;
-
    end
 
 endmodule
 
-module tb_decoder; 
+module tb_instr_parser; 
 
    
     

@@ -5,7 +5,15 @@
 
 module alu #(parameter DATA_WIDTH  = 32, parameter CTRL_BITS = 4) (ctrl, a, b, c, zero, over, c_out);
    
-  localparam AND = 4'b0000, OR = 4'b0001, ADD = 4'b0010, SUB = 4'b0110, SLT = 4'b0111, SGE = 4'b0101, NOR = 4'b1100;
+  localparam AND  = 4'b0000, 
+             OR   = 4'b0011, 
+             XOR  = 4'b0001, 
+             ADD  = 4'b0010, 
+             SUB  = 4'b0110, 
+             SLT  = 4'b0111, 
+             SLTU = 4'b1111, 
+             SGE  = 4'b0101, 
+             NOR  = 4'b1100;
 
    output reg [DATA_WIDTH-1:0] c;
    output reg zero, over, c_out;
