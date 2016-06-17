@@ -1,8 +1,8 @@
 // Brian Gravelle
 // CIS 510 Complex Digital Design
 // RISC-V processor May 16 2016
-// decoder
-//
+// alu_op_generator
+// makes comtrol signals for alu and shifter
 
 module #(parameter FUNC_BITS = 3, OP_BITS = 7) alu_op_gen (op, func3, alt_op, alu_op, shift);
    

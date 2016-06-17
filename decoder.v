@@ -2,7 +2,7 @@
 // CIS 510 Complex Digital Design
 // RISC-V processor May 16 2016
 // decoder
-//
+// I don't know if we really need this for single cycle
 
 module decoder #(DATA_WIDTH  = 32) (instr, pc, imm, op, func, rs1, rs2, rd);
    
